@@ -1,0 +1,85 @@
+# Dependencies
+node_modules/
+npm-debug.log
+npm-debug.log.*
+yarn-debug.log
+yarn-error.log
+
+# Environment & Secrets (NEVER commit these)
+.env
+.env.local
+.env.*.local
+.env.backup
+
+# IDEs & Editors
+.vscode/
+.vscode-insiders/
+.idea/
+.idea/*
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.vs/
+.DS_Store
+
+# AI/LLM Tool artifacts (Cursor, Copilot, etc.)
+.cursor/
+.cursorrules
+.copilot/
+.github/copilot-instructions.md
+
+# Build outputs
+dist/
+build/
+*.tgz
+
+# Testing
+coverage/
+.nyc_output/
+test/
+
+# OS-specific files
+.AppleDouble
+.LSOverride
+Icon?
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+*.bak
+*.swp
+
+# Logs
+logs/
+*.log*
+.pnpm-debug.log
+
+# Docker
+.dockerignore
+
+# CI/CD
+.gitlab-ci.yml
+.circleci/
+
+# Config files
+beamup.json
+config.json
+
+# Documentation that shouldn't be committed
+OPTIMIZATION_SUMMARY.md
+stremio-addon-sdk-docs
+
+# Lock files (optional - uncomment if you don't want to commit)
+# package-lock.json
+# yarn.lock
+
+# Node version managers
+.nvmrc
+.node-version
