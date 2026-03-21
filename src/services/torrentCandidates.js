@@ -9,6 +9,35 @@ function parseQuality(value) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+function normalizeText(value) {
+  return value == null ? '' : String(value).trim();
+}
+
+function normalizeInfoHash(value) {
+  const v = normalizeText(value).toLowerCase();
+  return /^[a-f0-9]{40}$/.test(v) ? v : '';
+}
+
+function extractInfoHashFromMagnet(magnet) {
+  const m = normalizeText(magnet).match(/xt=urn:btih:([a-zA-Z0-9]+)/i);
+  if (!m) return '';
+  const raw = String(m[1]).toLowerCase();
+  return /^[a-f0-9]{40}$/.test(raw) ? raw : '';
+}
+
+function stableIdentityKey(c) {
+  const hash = normalizeInfoHash(c?.infoHash) || extractInfoHashFromMagnet(c?.magnet);
+  if (hash) return `h:${hash}`;
+
+  // Fallback for results without hash/magnet: exact release label + size.
+  // This removes cross-query duplicates while still being strict.
+  const name = normalizeText(c?.name).toLowerCase();
+  const size = c?.sizeBytes && !isNaN(c.sizeBytes) ? Number(c.sizeBytes) : 0;
+  const quality = normalizeText(c?.quality).toLowerCase();
+  if (name) return `t:${name}|s:${size}|q:${quality}`;
+  return '';
+}
+
 function extractDateFromTitle(title) {
   if (!title) return null;
   // Look for common date patterns: YYYY.MM.DD, YYYYMMDD, YYYY-MM-DD
@@ -50,15 +79,7 @@ function dedupe(candidates) {
   const map = new Map();
   for (const c of candidates) {
     if (!c) continue;
-    const key = (c.infoHash && String(c.infoHash).toLowerCase())
-      ? `h:${String(c.infoHash).toLowerCase()}`
-      : c.magnet
-        ? `m:${String(c.magnet).slice(0, 200)}`
-        : c.downloadUrl
-          ? `u:${String(c.downloadUrl).slice(0, 200)}`
-          : c.name
-            ? `t:${String(c.name).toLowerCase().slice(0, 200)}`
-            : null;
+    const key = stableIdentityKey(c);
     if (!key) continue;
 
     const existing = map.get(key);
@@ -67,18 +88,16 @@ function dedupe(candidates) {
       continue;
     }
 
-    // Prefer entries with both hash+magnet, higher quality, then larger size
+    // Keep best representative for same identity.
     const score = (x) => {
-      const hasHash = x.infoHash ? 1 : 0;
-      const hasMagnet = x.magnet ? 1 : 0;
-      const hasDownload = x.downloadUrl ? 1 : 0;
-      const q = parseQuality(x.quality);
-      const s = x.sizeBytes && !isNaN(x.sizeBytes) ? Number(x.sizeBytes) : 0;
+      const hasHash = normalizeInfoHash(x?.infoHash) ? 1 : 0;
+      const hasMagnet = normalizeText(x?.magnet) ? 1 : 0;
+      const hasDownload = normalizeText(x?.downloadUrl) ? 1 : 0;
+      const q = parseQuality(x?.quality);
+      const s = x?.sizeBytes && !isNaN(x.sizeBytes) ? Number(x.sizeBytes) : 0;
       return (hasHash + hasMagnet) * 1_000_000_000_000 + hasDownload * 10_000_000_000 + q * 1_000_000_000 + s;
     };
-    if (score(c) > score(existing)) {
-      map.set(key, c);
-    }
+    if (score(c) > score(existing)) map.set(key, c);
   }
   return Array.from(map.values());
 }

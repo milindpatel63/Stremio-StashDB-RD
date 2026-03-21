@@ -11,6 +11,18 @@ function normalizeBaseUrl(url) {
   return String(url).replace(/\/+$/, '');
 }
 
+function parseIndexerIds(raw) {
+  if (raw == null) return [];
+  const str = String(raw).trim();
+  if (!str) return [];
+  return str
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(s => parseInt(s, 10))
+    .filter(n => Number.isInteger(n) && n > 0);
+}
+
 function isMagnet(url) {
   return typeof url === 'string' && url.startsWith('magnet:');
 }
@@ -158,17 +170,42 @@ async function search(query, opts = {}) {
 
   const categories = opts.categories ?? (process.env.PROWLARR_CATEGORIES || '6000');
   const limit = opts.limit ?? parseInt(process.env.PROWLARR_LIMIT || '50', 10);
+  const indexerIds = Array.isArray(opts.indexerIds)
+    ? opts.indexerIds
+    : parseIndexerIds(process.env.PROWLARR_INDEXER_IDS);
 
   const url = `${base}/api/v1/search`;
 
   try {
+    const params = {
+      query: normalizedQuery,
+      categories,
+      limit
+    };
+    if (indexerIds.length > 0) {
+      params.indexerIds = indexerIds;
+      console.log(`[prowlarr] Restricting search to indexerIds=${indexerIds.join(',')}`);
+    }
+
     const res = await axios.get(url, {
       timeout: PROWLARR_TIMEOUT_MS,
       headers: { 'X-Api-Key': apiKey },
-      params: {
-        query: normalizedQuery,
-        categories,
-        limit
+      params,
+      // Ensure arrays are encoded as repeated query params:
+      // indexerIds=1&indexerIds=2 (not comma-joined, not bracketed).
+      paramsSerializer: (p) => {
+        const usp = new URLSearchParams();
+        for (const [k, v] of Object.entries(p || {})) {
+          if (v == null || v === '') continue;
+          if (Array.isArray(v)) {
+            for (const item of v) {
+              if (item != null && item !== '') usp.append(k, String(item));
+            }
+          } else {
+            usp.append(k, String(v));
+          }
+        }
+        return usp.toString();
       }
     });
 

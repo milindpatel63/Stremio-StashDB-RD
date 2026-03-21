@@ -28,6 +28,7 @@ Edit `.env` with:
 - `STASHDB_API_KEY` - Get from https://stashdb.org/settings#api
 - `PROWLARR_URL` - Your Prowlarr instance (e.g., `https://prowlarr.example.com`)
 - `PROWLARR_API_KEY` - Your Prowlarr API key
+- `PROWLARR_INDEXER_IDS` (optional) - comma-separated indexer IDs to restrict search (empty = all enabled indexers)
 - `PUBLIC_URL` and `SECRET_KEY` - required to enable Real-Debrid “on click” stream resolution
 
 Real-Debrid API token is configured in the Stremio addon settings (not in `.env`).
