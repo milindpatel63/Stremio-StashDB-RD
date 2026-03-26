@@ -1,4 +1,5 @@
 const axios = require('axios');
+const logger = require('../logger');
 
 const STASHDB_URL = process.env.STASHDB_URL || 'https://stashdb.org/graphql';
 
@@ -177,6 +178,14 @@ async function getTrendingScenes(apiKey, targetCount = 100) {
 async function queryScenesPage(apiKey, { page, perPage = parseInt(process.env.STASHDB_PER_PAGE || '25', 10), text = null, sort = 'TRENDING', direction = 'DESC' }) {
   const normalizedKey = apiKey ? String(apiKey).trim() : '';
   try {
+    logger.debug('[stashdb] queryScenesPage request', {
+      url: STASHDB_URL,
+      page,
+      perPage,
+      text,
+      sort,
+      direction
+    });
     const response = await axios.post(
       STASHDB_URL,
       {
@@ -193,13 +202,35 @@ async function queryScenesPage(apiKey, { page, perPage = parseInt(process.env.ST
 
     if (response.data.errors) {
       console.error('StashDB GraphQL errors:', response.data.errors);
+      logger.debug('[stashdb] queryScenesPage graphql errors', response.data.errors);
       return { scenes: [], count: 0 };
     }
 
     const result = response.data.data?.queryScenes;
-    return { scenes: result?.scenes || [], count: result?.count || 0 };
+    const scenes = result?.scenes || [];
+    logger.debug('[stashdb] queryScenesPage response', {
+      page,
+      perPage,
+      returned: Array.isArray(scenes) ? scenes.length : null,
+      count: result?.count || 0
+    });
+    logger.debug('[stashdb] queryScenesPage scene ids/titles', {
+      page,
+      ids: Array.isArray(scenes) ? scenes.map(s => s?.id).filter(Boolean) : [],
+      missingTitleCount: Array.isArray(scenes)
+        ? scenes.filter(s => !s?.title || String(s.title).trim().length === 0).length
+        : null
+    });
+    return { scenes, count: result?.count || 0 };
   } catch (error) {
     console.error('StashDB API error:', error.message);
+    logger.debug('[stashdb] queryScenesPage error', {
+      page,
+      perPage,
+      message: error?.message || null,
+      status: error?.response?.status || null,
+      data: error?.response?.data || null
+    });
     return { scenes: [], count: 0 };
   }
 }
@@ -420,6 +451,14 @@ const STUDIO_BY_ID_QUERY = `
 async function queryPerformersPage(apiKey, { page, perPage = parseInt(process.env.STASHDB_PER_PAGE || '25', 10), text = null, sort = 'SCENE_COUNT', direction = 'DESC' }) {
   const normalizedKey = apiKey ? String(apiKey).trim() : '';
   try {
+    logger.debug('[stashdb] queryPerformersPage request', {
+      url: STASHDB_URL,
+      page,
+      perPage,
+      text,
+      sort,
+      direction
+    });
     const response = await axios.post(
       STASHDB_URL,
       {
@@ -436,13 +475,27 @@ async function queryPerformersPage(apiKey, { page, perPage = parseInt(process.en
 
     if (response.data.errors) {
       console.error('StashDB GraphQL errors:', response.data.errors);
+      logger.debug('[stashdb] queryPerformersPage graphql errors', response.data.errors);
       return { performers: [], count: 0 };
     }
 
     const result = response.data.data?.queryPerformers;
+    logger.debug('[stashdb] queryPerformersPage response', {
+      page,
+      perPage,
+      returned: Array.isArray(result?.performers) ? result.performers.length : null,
+      count: result?.count || 0
+    });
     return { performers: result?.performers || [], count: result?.count || 0 };
   } catch (error) {
     console.error('StashDB API error:', error.message);
+    logger.debug('[stashdb] queryPerformersPage error', {
+      page,
+      perPage,
+      message: error?.message || null,
+      status: error?.response?.status || null,
+      data: error?.response?.data || null
+    });
     return { performers: [], count: 0 };
   }
 }
@@ -455,6 +508,14 @@ async function queryPerformersPage(apiKey, { page, perPage = parseInt(process.en
 async function queryStudiosPage(apiKey, { page, perPage = parseInt(process.env.STASHDB_PER_PAGE || '25', 10), text = null, sort = 'UPDATED_AT', direction = 'DESC' }) {
   const normalizedKey = apiKey ? String(apiKey).trim() : '';
   try {
+    logger.debug('[stashdb] queryStudiosPage request', {
+      url: STASHDB_URL,
+      page,
+      perPage,
+      text,
+      sort,
+      direction
+    });
     const response = await axios.post(
       STASHDB_URL,
       {
@@ -471,13 +532,27 @@ async function queryStudiosPage(apiKey, { page, perPage = parseInt(process.env.S
 
     if (response.data.errors) {
       console.error('StashDB GraphQL errors:', response.data.errors);
+      logger.debug('[stashdb] queryStudiosPage graphql errors', response.data.errors);
       return { studios: [], count: 0 };
     }
 
     const result = response.data.data?.queryStudios;
+    logger.debug('[stashdb] queryStudiosPage response', {
+      page,
+      perPage,
+      returned: Array.isArray(result?.studios) ? result.studios.length : null,
+      count: result?.count || 0
+    });
     return { studios: result?.studios || [], count: result?.count || 0 };
   } catch (error) {
     console.error('StashDB API error:', error.message);
+    logger.debug('[stashdb] queryStudiosPage error', {
+      page,
+      perPage,
+      message: error?.message || null,
+      status: error?.response?.status || null,
+      data: error?.response?.data || null
+    });
     return { studios: [], count: 0 };
   }
 }

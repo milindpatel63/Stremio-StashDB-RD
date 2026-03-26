@@ -58,6 +58,7 @@ services:
 
       
       # Logging (optional)
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     
     # Resource limits (adjust based on your needs)
     # deploy:
