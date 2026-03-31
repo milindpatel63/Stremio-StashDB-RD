@@ -31,7 +31,7 @@ USER nodejs
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 7070), (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 7070) + '/manifest.json', (r) => { if (r.statusCode !== 200) throw new Error(r.statusCode) })"
 
 # Expose port (default 7070, override with PORT env var)
 EXPOSE 7070
